@@ -1,6 +1,5 @@
 #include <stdio.h>
-#include "pico/stdlib.h"
-#include <stdlib.h>      
+#include "pico/stdlib.h"    
 #include "hardware/i2c.h"
 #include "inc/ssd1306.h"
 #include "hardware/timer.h"
@@ -18,7 +17,7 @@
 
 bool hab = true; // variável de controle do temporizador
 bool tela = false; // variável de controle da câmera
-int carga = 5; // quantidade de porções de ração inicial
+int carga = 0; // quantidade de porções de ração inicial
 uint32_t contador = 5000; // contador do temporizador
 static volatile uint32_t last_time = 0;         //variável de tempo para debouncing
 ssd1306_t oled;// configuração para o Oled
@@ -75,6 +74,7 @@ gpio_put(LED_G, 0);// o relé fecha, completando a oferta da ração
     }return 0;
 }
 int main (){
+
     stdio_init_all();
 
     // declaração dos botões
@@ -106,6 +106,7 @@ int main (){
     //Habilita as interrupções manuais
     gpio_set_irq_enabled_with_callback(botA,GPIO_IRQ_EDGE_FALL,true, &gpio_irq_handler);
     gpio_set_irq_enabled_with_callback(botB,GPIO_IRQ_EDGE_FALL,true, &gpio_irq_handler);
+    gpio_put(LED_R, 1);// envia alerta de que o estoque acabou
 while(true)
     {
         if(carga>0){
@@ -115,7 +116,7 @@ while(true)
             }
 
         }else{
-            gpio_put(LED_R, 1);// envia alerta de que o estoque acabou
+           
         }
     }
     return 0;
