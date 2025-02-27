@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include "pico/stdlib.h"    
+#include "pico/stdlib.h"
+#include <stdlib.h>      
 #include "hardware/i2c.h"
 #include "inc/ssd1306.h"
 #include "hardware/timer.h"
@@ -16,12 +17,12 @@
 #define I2C_SCL 15
 
 bool hab = true; // variável de controle do temporizador
-bool tela = false; // variável de controle da câmera
-int carga = 0; // quantidade de porções de ração inicial
-uint32_t contador = 5000; // contador do temporizador
+int carga = 5; // quantidade de porções de ração inicial
 static volatile uint32_t last_time = 0;         //variável de tempo para debouncing
 ssd1306_t oled;// configuração para o Oled
 bool cor = true;// configuração para o Oled
+
+static void gpio_irq_handler(uint gpio,uint32_t events);    // declaração da ativação manual
 
 void chamado() // função que reproduz a simulação do áudio
 {
@@ -43,9 +44,6 @@ void chamado() // função que reproduz a simulação do áudio
         time -= 3;
     }
 }
-
-static void gpio_irq_handler(uint gpio,uint32_t events);    // declaração da ativação manual
-
 void gpio_irq_handler(uint gpio,uint32_t events) // a função a ser chamada pela ativação manual
         {
             uint32_t current_time = to_us_since_boot(get_absolute_time());
@@ -55,6 +53,7 @@ void gpio_irq_handler(uint gpio,uint32_t events) // a função a ser chamada pel
                 if(gpio == 5){
                     hab = !hab;// desliga o temporizador
                     cachorro();
+                    chamado();
 
                 }if (gpio == 6){ // função auxiliar para renovar o estoque
                     gpio_put(LED_R, 0); //desliga o alerta de estoque vazio
@@ -106,18 +105,20 @@ int main (){
     //Habilita as interrupções manuais
     gpio_set_irq_enabled_with_callback(botA,GPIO_IRQ_EDGE_FALL,true, &gpio_irq_handler);
     gpio_set_irq_enabled_with_callback(botB,GPIO_IRQ_EDGE_FALL,true, &gpio_irq_handler);
+
     gpio_put(LED_R, 1);// envia alerta de que o estoque acabou
+
 while(true)
-    {
+   {
         if(carga>0){
             gpio_put(LED_R, 0);// desliga o alerta
             if(hab){
-                add_alarm_in_ms(contador, turn_off_callback, NULL, false); 
+            add_alarm_in_ms(5000, turn_off_callback, NULL, false); //inicia o temporizador
             }
 
         }else{
-           
+            gpio_put(LED_R, 1);// envia alerta de que o estoque acabou
         }
-    }
-    return 0;
+   }
+   return 0;
 }
